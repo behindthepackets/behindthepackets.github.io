@@ -25,12 +25,14 @@ export function Home() {
               This is a real network, not a slide deck.
             </h2>
             <p className="section-lede">
-              I got curious about how networks <em>actually</em> work, so I built a
-              home laboratory and started experimenting. Every concept here was
-              tested on real hardware and virtual gear — configured, captured,
-              broken, and understood one packet at a time. This is the engineering
-              journal that came out of it: hypotheses, packet captures, failures,
-              and what each one taught me.
+              It started with a single Proxmox box. I began exploring
+              virtualization — VMs and Linux containers — then moved to Docker,
+              running Uptime Kuma, Portainer, AdGuard, and Nginx Proxy Manager, and
+              gradually wired everything into a complete home infrastructure. Along
+              the way I went deeper into routing, VLANs, firewalls, DNS, reverse
+              proxies, backups, and network segmentation. What began as a simple
+              Proxmox setup became a full homelab — and a hands-on journey to
+              understand what really happens behind the packets.
             </p>
           </div>
         </div>

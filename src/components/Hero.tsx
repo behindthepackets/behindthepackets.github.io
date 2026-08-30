@@ -32,7 +32,7 @@ export function Hero() {
             <button type="button" onClick={() => goTo('lab')} className="btn btn--primary">
               Explore the Lab →
             </button>
-            <Link to="/experiments/arp-who-has" className="btn btn--ghost">
+            <Link to="/experiments/proxmox-first-boot" className="btn btn--ghost">
               Start the Journey
             </Link>
           </div>

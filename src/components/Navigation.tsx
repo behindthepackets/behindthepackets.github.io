@@ -68,7 +68,7 @@ export function Navigation() {
             </button>
           ))}
           <Link
-            to="/experiments/arp-who-has"
+            to="/experiments/proxmox-first-boot"
             className={`nav__link ${pathname.startsWith('/experiments') ? 'is-active' : ''}`}
             onClick={() => setOpen(false)}
           >
