@@ -29,6 +29,16 @@ export const journey: JourneyEntry[] = [
   },
   {
     day: 3,
+    slug: 'tailscale-overlay',
+    concept: 'Tailscale',
+    summary: 'A WireGuard overlay that reaches the lab from anywhere — without exposing a single public port.',
+    status: 'in-progress',
+    difficulty: 'core',
+    tags: ['VPN', 'WireGuard', 'Overlay'],
+    hasExperiment: true,
+  },
+  {
+    day: 4,
     slug: 'proxmox-lxc-containers',
     concept: 'LXC Containers',
     summary: 'Lightweight Linux containers that share the host kernel — VMs without the weight.',
@@ -38,7 +48,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: true,
   },
   {
-    day: 4,
+    day: 5,
     slug: 'proxmox-linux-bridge',
     concept: 'Proxmox Networking',
     summary: 'How vmbr0 turns one NIC into a virtual switch every VM plugs into.',
@@ -48,11 +58,11 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 5,
+    day: 6,
     slug: 'proxmox-backups-snapshots',
     concept: 'Backups & Snapshots',
     summary: 'Snapshots, scheduled backups, and proving I can actually restore them.',
-    status: 'in-progress',
+    status: 'planned',
     difficulty: 'core',
     tags: ['Storage', 'Backup'],
     hasExperiment: false,
@@ -60,7 +70,7 @@ export const journey: JourneyEntry[] = [
 
   // ── Phase 2 · The services: a Docker homelab ────────────────────────────
   {
-    day: 6,
+    day: 7,
     slug: 'docker-first-container',
     concept: 'Docker',
     summary: 'Installing Docker on a VM and running the first containerised service.',
@@ -70,7 +80,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 7,
+    day: 8,
     slug: 'portainer-control-plane',
     concept: 'Portainer',
     summary: 'A web UI over the Docker socket — and what that socket really exposes.',
@@ -80,7 +90,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 8,
+    day: 9,
     slug: 'uptime-kuma-monitoring',
     concept: 'Uptime Kuma',
     summary: 'Watching every service with health checks and learning what "down" really means.',
@@ -90,7 +100,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 9,
+    day: 10,
     slug: 'adguard-dns-sinkhole',
     concept: 'AdGuard Home',
     summary: 'Making my own DNS server the source of truth — and sinkholing ad domains.',
@@ -100,7 +110,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: true,
   },
   {
-    day: 10,
+    day: 11,
     slug: 'nginx-proxy-manager',
     concept: 'Nginx Proxy Manager',
     summary: 'One IP, many services: routing by hostname and terminating TLS at the edge.',
@@ -110,7 +120,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: true,
   },
   {
-    day: 11,
+    day: 12,
     slug: 'docker-networking',
     concept: 'Docker Networking',
     summary: 'veth pairs, the docker0 bridge, and how a container reaches the outside world.',
@@ -122,7 +132,7 @@ export const journey: JourneyEntry[] = [
 
   // ── Phase 3 · The networking underneath it all ──────────────────────────
   {
-    day: 12,
+    day: 13,
     slug: 'arp-who-has',
     concept: 'ARP',
     summary: 'How a host maps an IP to a MAC — and how easily that trust is abused.',
@@ -132,7 +142,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: true,
   },
   {
-    day: 13,
+    day: 14,
     slug: 'switch-mac-table',
     concept: 'MAC Learning',
     summary: 'Watching a switch build its forwarding table from source addresses.',
@@ -142,7 +152,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 14,
+    day: 15,
     slug: 'vlan-tag-on-the-wire',
     concept: 'VLANs',
     summary: 'One switch, two isolated networks, and the 4-byte tag that separates them.',
@@ -152,7 +162,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: true,
   },
   {
-    day: 15,
+    day: 16,
     slug: 'dhcp-four-messages',
     concept: 'DHCP',
     summary: 'DORA on the wire: Discover, Offer, Request, Ack from a broadcast to a lease.',
@@ -162,7 +172,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 16,
+    day: 17,
     slug: 'subnetting-the-mask',
     concept: 'Subnetting',
     summary: 'What the mask really does when a host decides "local or gateway?".',
@@ -172,7 +182,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 17,
+    day: 18,
     slug: 'default-gateway-routing',
     concept: 'Routing Basics',
     summary: 'How a packet chooses a next hop and what the routing table really encodes.',
@@ -182,7 +192,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 18,
+    day: 19,
     slug: 'static-routes',
     concept: 'Static Routes',
     summary: 'Manually steering traffic and watching a route finally get used.',
@@ -192,7 +202,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 19,
+    day: 20,
     slug: 'nat-where-it-happens',
     concept: 'NAT',
     summary: 'Finding the exact device that rewrites source addresses and ports.',
@@ -202,7 +212,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 20,
+    day: 21,
     slug: 'dns-what-happens-when-i-type',
     concept: 'DNS',
     summary: 'Tracing one lookup and watching the cache rewrite the story.',
@@ -214,7 +224,7 @@ export const journey: JourneyEntry[] = [
 
   // ── Phase 4 · Hardening, depth & making it observable ───────────────────
   {
-    day: 21,
+    day: 22,
     slug: 'reverse-proxy-tls',
     concept: 'TLS Termination',
     summary: 'Where HTTPS actually ends and how the proxy presents a valid certificate.',
@@ -224,7 +234,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 22,
+    day: 23,
     slug: 'firewall-what-it-sees',
     concept: 'Firewalls',
     summary: 'Stateful vs stateless: what a firewall actually inspects per packet.',
@@ -234,7 +244,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 23,
+    day: 24,
     slug: 'network-segmentation',
     concept: 'Segmentation',
     summary: 'Splitting the lab into trust zones so IoT can never touch the servers.',
@@ -244,7 +254,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 24,
+    day: 25,
     slug: 'tcp-handshake',
     concept: 'TCP Handshake',
     summary: 'SYN, SYN-ACK, ACK — and what sequence numbers are actually agreeing on.',
@@ -254,7 +264,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 25,
+    day: 26,
     slug: 'mtu-and-fragmentation',
     concept: 'MTU',
     summary: 'The mysterious hang that is really a path-MTU / fragmentation problem.',
@@ -264,7 +274,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 26,
+    day: 27,
     slug: 'wireshark-reading-a-capture',
     concept: 'Wireshark',
     summary: 'Turning a raw pcap into a story with filters and follow-stream.',
@@ -274,17 +284,17 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 27,
+    day: 28,
     slug: 'vpn-wireguard',
     concept: 'VPNs',
-    summary: 'A WireGuard tunnel end to end, and what the encrypted packets reveal.',
+    summary: 'A raw WireGuard tunnel end to end, and what the encrypted packets reveal.',
     status: 'planned',
     difficulty: 'deep',
     tags: ['Security', 'VPN'],
     hasExperiment: false,
   },
   {
-    day: 28,
+    day: 29,
     slug: 'zero-trust',
     concept: 'Zero Trust',
     summary: 'Segmenting the lab so every flow must be explicitly allowed.',
@@ -294,7 +304,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 29,
+    day: 30,
     slug: 'network-automation',
     concept: 'Network Automation',
     summary: 'Describing the lab as code and applying config idempotently.',
@@ -304,7 +314,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 30,
+    day: 31,
     slug: 'observability',
     concept: 'Observability',
     summary: 'Flows, metrics, and captures that make the invisible network visible.',

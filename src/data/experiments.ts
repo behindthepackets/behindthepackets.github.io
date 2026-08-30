@@ -145,6 +145,184 @@ ifreload -a
   },
   {
     day: 3,
+    slug: 'tailscale-overlay',
+    title: 'Tailscale: Reaching the Lab From Anywhere, One Encrypted Packet at a Time',
+    concept: 'Tailscale',
+    summary:
+      'Building a WireGuard overlay so a remote laptop can reach pve0, the NAS, and internal services without a single public port — then following one packet from outside the house all the way to the NAS and back.',
+    status: 'in-progress',
+    difficulty: 'core',
+    tags: ['Tailscale', 'WireGuard', 'VPN', 'Overlay', 'Routing'],
+    date: '2025-01-03',
+    sections: [
+      {
+        title: 'The Question',
+        body: `After the Proxmox host, NAS, VMs, LXC, Docker services, DNS, and reverse proxy were all running *inside* my home network, one question was left: **how do I securely reach the lab when I'm not at home?** I didn't want to expose every internal service to the public Internet. That led me to **Tailscale** — and the real point wasn't installing it. It was understanding *what happens to a packet when a device outside my home wants to reach something inside my network.*`,
+      },
+      {
+        title: 'The Setup',
+        body: `Tailscale adds another networking layer on top of everything I'd already built:
+
+\`\`\`text
+                         INTERNET
+                            │
+                    ┌───────┴───────┐
+                    │   Tailscale   │
+                    │    Tailnet    │
+                    └───────┬───────┘
+                            │  secure tunnel
+                            ▼
+                     Home Network
+                            │
+                          Proxmox
+                            pve0
+                        192.168.1.10
+              ┌─────────────┼─────────────┐
+              ▼             ▼             ▼
+             VM            LXC           NAS
+                            │
+                          Docker
+              ┌─────────────┼─────────────┐
+              ▼             ▼             ▼
+         Uptime Kuma    Portainer      AdGuard
+                                           │
+                                           ▼
+                                  Nginx Proxy Manager
+\`\`\`
+
+**Actual:** the home LAN is \`192.168.1.0/24\`, gateway \`192.168.1.1\`, with \`pve0\` at \`192.168.1.10\`.
+
+> Which machine acts as the **subnet router** / **exit node** / Tailscale endpoint depends on the real install. I'm not pinning that to a specific host here — set it to your actual node. Anything marked \`example\` below is illustrative only.`,
+      },
+      {
+        title: 'The Hypothesis',
+        body: `My mental model going in:
+
+- **Tailscale doesn't make my LAN disappear — it creates another *path* into it.** A remote laptop never physically joins my Ethernet; it joins an overlay (a **tailnet**) and is granted access to selected resources.
+- Each device gets its own Tailscale identity:
+
+\`\`\`text
+                 TAILNET
+       ┌────────────┼────────────┐
+       ▼            ▼            ▼
+    Laptop        Phone       Homelab → pve0
+\`\`\`
+
+- For devices that *can't* run Tailscale (NAS, switches, IoT), a **subnet router** advertises the LAN into the tailnet and forwards on their behalf. A subnet router is **not** an exit node: a subnet router reaches *specific private subnets*; an exit node routes a device's *broader Internet* traffic.
+
+So I expected a remote packet to travel: remote device → WireGuard tunnel → home Tailscale node → (subnet router forwards) → LAN → destination, and back.`,
+      },
+      {
+        title: 'The Experiment',
+        body: `Run on the actual node (an *example* subnet router is a small LXC/VM on \`pve0\`):
+
+**1. Install and authenticate** on each device:
+
+\`\`\`bash
+# Linux node
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+\`\`\`
+
+**2. Make one node a subnet router** so tailnet devices can reach the LAN. Advertise the real home subnet and enable kernel forwarding:
+
+\`\`\`bash
+# Enable IP forwarding on the subnet-router host
+echo 'net.ipv4.ip_forward = 1' | sudo tee /etc/sysctl.d/99-tailscale.conf
+echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+
+# Advertise the actual LAN into the tailnet
+sudo tailscale up --advertise-routes=192.168.1.0/24
+\`\`\`
+
+**3. Approve the route** in the Tailscale admin console — advertised ≠ approved; it must be explicitly enabled.
+
+**4. Optional — MagicDNS** so I can use device names instead of Tailscale IPs. This is a *separate* DNS layer from AdGuard.`,
+      },
+      {
+        title: 'The Packets',
+        body: `The Behind-the-Packets question: *I'm sitting outside my house — how does my laptop reach my NAS?*
+
+\`\`\`text
+Remote Laptop → Tailscale interface → Tailscale routing
+   → encrypted WireGuard traffic → Home Tailscale node
+   → subnet routing → Home LAN → NAS
+   → NAS response → return route → Tailscale → Remote Laptop
+\`\`\`
+
+At every hop I asked the same questions: **source/destination IP, source/destination MAC, is it encrypted, where is it decrypted, which routing table is consulted, is NAT/SNAT happening, which interface sees it, where does the return go, which firewall rules apply?**
+
+Two facts shape the answers:
+
+- Traffic between tailnet nodes is **WireGuard-encrypted** end to end; it is only plaintext again *after* the home node decrypts it and hands it to the LAN.
+- A **subnet router uses SNAT by default** — to the NAS, the packet appears to come *from the subnet router's LAN IP*, not the remote laptop. That is why the NAS's reply just returns to a local address. (SNAT can be disabled when preserving the original source IP matters — e.g. for LAN-side ACLs or logging.)`,
+      },
+      {
+        title: 'The Result',
+        body: `From anywhere, my laptop reaches selected internal resources — Proxmox, LXC/VMs, the NAS, SSH, internal web apps — **without a single public-facing port forward**. The overlay carries me in.
+
+It also forced a separation I now keep in mind everywhere:
+
+\`\`\`text
+ROUTING          "Where does the packet go?"
+ACCESS CONTROL   "Is the packet allowed?"
+\`\`\`
+
+A route can exist while an ACL still denies the connection — and vice versa. They are not the same knob.`,
+      },
+      {
+        title: 'What Broke',
+        body: `When something didn't connect, I didn't reinstall — I followed the packet:
+
+\`\`\`text
+Tailscale connected? → reaches the tailnet node? → knows the destination route?
+→ subnet route advertised? → route APPROVED in admin? → ACLs allow it?
+→ subnet router forwarding (ip_forward)? → home network routes the response?
+→ destination firewall allows it? → application accepts the connection?
+\`\`\`
+
+The two that bit most often were the quiet ones: a subnet route that was **advertised but never approved** in the console, and a subnet router where **\`ip_forward\` was still 0**, so packets reached the router and simply died there.`,
+      },
+      {
+        title: 'What I Learned',
+        body: `- **An overlay sits *on top of* the existing network** — it adds a secure path in, it doesn't replace the LAN.
+- **Routing ≠ access control.** Routes decide where traffic *can* go; grants/ACLs decide whether it's *allowed*.
+- **Subnet router ≠ exit node.** One reaches specific private subnets; the other routes broad Internet egress. I only describe my setup as using whichever is actually configured.
+- **MagicDNS ≠ AdGuard.** MagicDNS names tailnet devices; AdGuard filters/resolves for the LAN. Knowing *which resolver answers* is half the battle.
+- **Subnet routers SNAT by default**, so the source IP the LAN sees is the router's, not the remote client's.
+- Direct Tailscale access and reverse-proxy (NPM) access are different architectures — I choose per service, not interchangeably.
+- Above all: don't treat it as "VPN magic." *Follow the packet.*`,
+      },
+      {
+        title: 'Try It Yourself',
+        body: `\`\`\`bash
+# Tailscale state and connectivity
+tailscale status
+tailscale netcheck
+tailscale ping <device>
+
+# Linux networking on the subnet router / client
+ip addr
+ip route            # look for the advertised subnet via the tailscale interface
+ip neigh
+ss -tupn
+
+# DNS: which resolver actually answers?
+dig google.com
+dig <device>.<tailnet>.ts.net
+
+# Watch the encrypted path vs the decrypted LAN side
+sudo tcpdump -i tailscale0 -n
+sudo tcpdump -i eth0 -n host <nas-ip>
+\`\`\`
+
+Trace one real request end to end and answer, at each hop: source IP, destination IP, is it encrypted, where is it decrypted, and which routing table made the decision.`,
+      },
+    ],
+  },
+  {
+    day: 4,
     slug: 'proxmox-lxc-containers',
     title: 'LXC Containers: Where a Container Sits in the Proxmox Stack',
     concept: 'LXC Containers',
@@ -368,7 +546,7 @@ If a hop fails, reach for \`ip addr\`, \`ip route\`, \`ip neigh\`, \`ss\`, \`cur
     ],
   },
   {
-    day: 9,
+    day: 10,
     slug: 'adguard-dns-sinkhole',
     title: 'AdGuard Home: Running My Own DNS Sinkhole',
     concept: 'AdGuard Home',
@@ -493,7 +671,7 @@ sudo ss -ulpn 'sport = :53'
     ],
   },
   {
-    day: 10,
+    day: 11,
     slug: 'nginx-proxy-manager',
     title: 'Nginx Proxy Manager: One IP, Many Services',
     concept: 'Nginx Proxy Manager',
@@ -590,7 +768,7 @@ sudo tcpdump -i eth0 -n 'tcp port 443' -vvv | grep -i server_name
     ],
   },
   {
-    day: 12,
+    day: 13,
     slug: 'arp-who-has',
     title: 'ARP: Who Has 192.168.10.1? Tell Everyone.',
     concept: 'ARP',
@@ -699,7 +877,7 @@ Try running \`arping <gateway-ip>\` from two hosts with the same address and wat
     ],
   },
   {
-    day: 14,
+    day: 15,
     slug: 'vlan-tag-on-the-wire',
     title: 'VLANs: Finding the 802.1Q Tag on the Wire',
     concept: 'VLANs',
@@ -790,7 +968,7 @@ sudo tcpdump -i eth0 -e -n vlan
     ],
   },
   {
-    day: 20,
+    day: 21,
     slug: 'dns-what-happens-when-i-type',
     title: 'DNS: What Actually Happens When I Type google.com',
     concept: 'DNS',
