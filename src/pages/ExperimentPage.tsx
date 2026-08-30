@@ -59,11 +59,25 @@ export function ExperimentPage() {
 
       <div className="exp__layout">
         <nav className="exp__toc" aria-label="Sections">
-          {exp.sections.map((s, i) => (
-            <a key={s.title} href={`#${slugify(s.title)}`}>
-              {String(i + 1).padStart(2, '0')} · {s.title}
-            </a>
-          ))}
+          {exp.sections.map((s, i) => {
+            const id = slugify(s.title);
+            return (
+              <a
+                key={s.title}
+                href={`#${id}`}
+                onClick={(e) => {
+                  // HashRouter owns the URL hash, so a plain anchor jump breaks
+                  // the route. Scroll to the section manually instead.
+                  e.preventDefault();
+                  document
+                    .getElementById(id)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+              >
+                {String(i + 1).padStart(2, '0')} · {s.title}
+              </a>
+            );
+          })}
         </nav>
 
         <article>
