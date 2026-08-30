@@ -789,7 +789,7 @@ I wanted to *see* that translation happen on the wire, not just read about it.`,
         title: 'The Setup',
         body: `- **Client:** Linux laptop, \`192.168.10.50\`, interface \`eth0\`
 - **Gateway:** UDM-style router, \`192.168.10.1\`
-- **Switch:** managed L2 switch, all ports in VLAN 10
+- **Switch:** managed L2 switch, all ports in one broadcast domain
 - **Tooling:** \`arp\`, \`ip neigh\`, \`tcpdump\`, Wireshark
 
 Everything lives in a single \`/24\` broadcast domain so ARP has somewhere to broadcast.`,
@@ -828,7 +828,7 @@ ARP, Request who-has 192.168.10.1 tell 192.168.10.50, length 28
 ARP, Reply 192.168.10.1 is-at f4:92:bf:aa:11:02, length 46
 \`\`\`
 
-The request went to the broadcast MAC \`ff:ff:ff:ff:ff:ff\` — every device in VLAN 10 saw it. Only the gateway answered, and it answered **unicast** straight back to my laptop's MAC. The whole thing took under a millisecond.`,
+The request went to the broadcast MAC \`ff:ff:ff:ff:ff:ff\` — every device on the subnet saw it. Only the gateway answered, and it answered **unicast** straight back to my laptop's MAC. The whole thing took under a millisecond.`,
       },
       {
         title: 'The Result',
@@ -877,98 +877,7 @@ Try running \`arping <gateway-ip>\` from two hosts with the same address and wat
     ],
   },
   {
-    day: 15,
-    slug: 'vlan-tag-on-the-wire',
-    title: 'VLANs: Finding the 802.1Q Tag on the Wire',
-    concept: 'VLANs',
-    summary:
-      'One physical switch, two networks that cannot see each other — until I capture the trunk and watch the 4-byte tag that keeps them apart.',
-    status: 'planned',
-    difficulty: 'core',
-    tags: ['VLAN', '802.1Q', 'Trunk', 'Layer 2', 'Isolation'],
-    date: '2025-01-09',
-    sections: [
-      {
-        title: 'The Question',
-        body: `I have one managed switch but I want my IoT gear on a separate network from my trusted devices. VLANs promise exactly that — multiple isolated L2 domains on shared hardware. But what actually *makes* them isolated? Where does the separation physically live?`,
-      },
-      {
-        title: 'The Setup',
-        body: `- **VLAN 10 — trusted:** \`192.168.10.0/24\`
-- **VLAN 20 — iot:** \`192.168.20.0/24\`
-- **Switch:** access ports for each device, one **trunk** port to the router carrying both VLANs tagged.
-- **Router-on-a-stick:** a single physical link to the router with two tagged sub-interfaces.
-- **Tooling:** \`tcpdump\`, a mirror/SPAN port for capturing the trunk.`,
-      },
-      {
-        title: 'The Hypothesis',
-        body: `On an **access port**, frames are plain untagged Ethernet — the device has no idea a VLAN exists. On the **trunk**, frames must carry an 802.1Q tag so the router can tell VLAN 10 traffic from VLAN 20 traffic. Two devices in different VLANs should not be able to reach each other at Layer 2 at all, even if they share the same switch.`,
-      },
-      {
-        title: 'The Experiment',
-        body: `I mirrored the trunk port to a capture laptop and generated traffic from a device in each VLAN:
-
-\`\`\`bash
-# On the capture host watching the mirrored trunk
-sudo tcpdump -i eth0 -e -n vlan
-
-# From the trusted host (VLAN 10)
-ping -c 1 192.168.10.1
-
-# From the IoT host (VLAN 20)
-ping -c 1 192.168.20.1
-\`\`\`
-
-Then I tried to ping directly across VLANs with no inter-VLAN routing rule permitting it.`,
-      },
-      {
-        title: 'The Packets',
-        body: `On the trunk, the tag was right there in the Ethernet header:
-
-\`\`\`text
-... 802.1Q, vlan 10, p 0, ethertype IPv4, 192.168.10.50 > 192.168.10.1: ICMP echo request
-... 802.1Q, vlan 20, p 0, ethertype IPv4, 192.168.20.31 > 192.168.20.1: ICMP echo request
-\`\`\`
-
-Same physical wire, same switch, but each frame is stamped with its VLAN ID. The ethertype \`0x8100\` marks the frame as 802.1Q-tagged, and the 12-bit VLAN ID field carries the 10 or 20. On the **access** ports, the very same pings appeared with **no tag at all**.`,
-      },
-      {
-        title: 'The Result',
-        body: `Intra-VLAN pings worked perfectly. The cross-VLAN ping (VLAN 10 host → VLAN 20 host) got nothing back — the switch never forwards a frame out of a port in a different VLAN, and the router wasn't configured to route between them. Isolation confirmed, and I could point at the exact byte that enforced it.`,
-      },
-      {
-        title: 'What Broke',
-        body: `My first attempt captured **nothing** with VLAN tags — every frame looked untagged. The problem: the mirror was configured on an *access* port, not the trunk, so the switch had already stripped the tag before the frame reached my capture. I also learned some NICs strip the tag in hardware before \`tcpdump\` sees it; I had to disable VLAN offload:
-
-\`\`\`bash
-sudo ethtool -K eth0 rxvlan off
-\`\`\`
-
-After mirroring the actual trunk and disabling offload, the tags appeared.`,
-      },
-      {
-        title: 'What I Learned',
-        body: `- A VLAN is enforced by a **4-byte tag** (TPID \`0x8100\` + VLAN ID) that only exists on trunk links.
-- Access ports are untagged; the device never knows its VLAN.
-- Isolation is a *switch forwarding rule*, not encryption — inter-VLAN traffic only flows if a router/L3 device deliberately bridges them.
-- NIC VLAN offload can hide tags from your capture. If tags are missing, suspect the capture point or offload before doubting the config.`,
-      },
-      {
-        title: 'Try It Yourself',
-        body: `\`\`\`bash
-# Create a tagged sub-interface for VLAN 20 on Linux
-sudo ip link add link eth0 name eth0.20 type vlan id 20
-sudo ip addr add 192.168.20.2/24 dev eth0.20
-sudo ip link set eth0.20 up
-
-# Capture only tagged frames
-sudo tcpdump -i eth0 -e -n vlan
-\`\`\``,
-      },
-    ],
-  },
-  {
-    day: 21,
+    day: 20,
     slug: 'dns-what-happens-when-i-type',
     title: 'DNS: What Actually Happens When I Type google.com',
     concept: 'DNS',

@@ -3,18 +3,6 @@ import type { BrokenThing } from './types';
 // The honest section: failed experiments and mistakes. These are first-class.
 export const breaks: BrokenThing[] = [
   {
-    id: 'vlan-lost-internet',
-    title: 'Why did the entire VLAN lose Internet?',
-    blast: 'IoT VLAN offline · ~40 min',
-    what: 'Every device on VLAN 20 could still ping each other but nothing could reach the WAN. VLAN 10 was completely fine.',
-    cause:
-      'The trunk to the router allowed VLAN 10 but I had never added VLAN 20 to the allowed-VLAN list. Traffic reached the switch, got tagged, and was dropped at the trunk because the router-facing port simply did not carry VLAN 20.',
-    fix: 'Added VLAN 20 to the trunk\'s tagged/allowed set and created the matching sub-interface on the router. Internet returned instantly.',
-    lesson:
-      'Intra-VLAN working while inter-VLAN/WAN fails almost always points at the trunk or the L3 gateway, not the access ports. Check what the uplink actually carries.',
-    relatedSlug: 'vlan-tag-on-the-wire',
-  },
-  {
     id: 'broke-dns',
     title: 'How I accidentally broke DNS for the whole house',
     blast: 'All name resolution down · ~15 min',

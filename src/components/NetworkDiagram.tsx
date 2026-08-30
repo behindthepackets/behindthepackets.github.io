@@ -16,8 +16,7 @@ const NODES: DiagramNode[] = [
   { id: 'ap', x: 150, y: 250, label: 'Wi-Fi AP' },
   { id: 'server', x: 450, y: 250, label: 'pve0' },
   { id: 'nas', x: 550, y: 250, label: 'NAS' },
-  { id: 'vlan-trusted', x: 90, y: 330, label: 'VLAN10' },
-  { id: 'vlan-iot', x: 210, y: 330, label: 'VLAN20' },
+  { id: 'clients', x: 150, y: 330, label: 'Clients' },
   { id: 'vms', x: 400, y: 330, label: 'VMs' },
   { id: 'containers', x: 500, y: 330, label: 'Containers' },
 ];
@@ -28,8 +27,7 @@ const EDGES: [string, string][] = [
   ['router', 'switch'],
   ['switch', 'ap'],
   ['switch', 'server'],
-  ['ap', 'vlan-trusted'],
-  ['ap', 'vlan-iot'],
+  ['ap', 'clients'],
   ['server', 'vms'],
   ['server', 'containers'],
   ['server', 'nas'],
@@ -48,7 +46,7 @@ export function NetworkDiagram({
     <svg
       viewBox="0 0 600 380"
       role="img"
-      aria-label="Home network topology from WAN through firewall, router and switch down to VLANs, VMs and containers"
+      aria-label="Home network topology from WAN through firewall, router and switch down to clients, VMs and containers"
       style={{ width: '100%', height: 'auto' }}
     >
       {EDGES.map(([a, b], i) => {

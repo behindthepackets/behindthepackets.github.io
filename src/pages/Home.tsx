@@ -31,7 +31,7 @@ export function Home() {
               layered in Docker to run Uptime Kuma, Portainer, AdGuard, and Nginx
               Proxy Manager. A NAS joined as the storage layer, wiring network
               storage into Proxmox, VMs, and containers. Each layer was another
-              chance to understand what happens underneath — routing, VLANs,
+              chance to understand what happens underneath — routing,
               firewalling, DNS, segmentation, backups, and packet flows.
             </p>
             <p className="section-lede section-lede--mono">
@@ -60,7 +60,7 @@ export function Home() {
           <SectionHeader
             eyebrow="// network lab"
             title="The lab as an evolving topology"
-            lede="WAN to firewall to router to switch, then out to VLANs, servers, VMs and containers. Hover a device to trace how it connects."
+            lede="WAN to firewall to router to switch, then out to clients, servers, VMs and containers. Hover a device to trace how it connects."
           />
           <LabSection />
         </div>

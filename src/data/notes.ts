@@ -55,8 +55,8 @@ export const notes: Note[] = [
     id: 'broadcast-domain',
     question: 'What is a broadcast domain and where does it end?',
     answer:
-      'A broadcast domain is the set of devices that receive each other\'s Layer 2 broadcasts (like ARP). A switch extends a broadcast domain; a VLAN splits one switch into several. A router terminates a broadcast domain — broadcasts do not cross Layer 3, which is exactly why you need ARP on each side but not across the router.',
-    tags: ['Layer 2', 'VLAN', 'Routing'],
+      'A broadcast domain is the set of devices that receive each other\'s Layer 2 broadcasts (like ARP). A switch extends a broadcast domain; a router terminates one — broadcasts do not cross Layer 3, which is exactly why you need ARP on each side but not across the router.',
+    tags: ['Layer 2', 'Routing'],
   },
   {
     id: 'ttl-purpose',

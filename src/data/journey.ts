@@ -153,16 +153,6 @@ export const journey: JourneyEntry[] = [
   },
   {
     day: 15,
-    slug: 'vlan-tag-on-the-wire',
-    concept: 'VLANs',
-    summary: 'One switch, two isolated networks, and the 4-byte tag that separates them.',
-    status: 'planned',
-    difficulty: 'core',
-    tags: ['Layer 2', '802.1Q'],
-    hasExperiment: true,
-  },
-  {
-    day: 16,
     slug: 'dhcp-four-messages',
     concept: 'DHCP',
     summary: 'DORA on the wire: Discover, Offer, Request, Ack from a broadcast to a lease.',
@@ -172,7 +162,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 17,
+    day: 16,
     slug: 'subnetting-the-mask',
     concept: 'Subnetting',
     summary: 'What the mask really does when a host decides "local or gateway?".',
@@ -182,7 +172,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 18,
+    day: 17,
     slug: 'default-gateway-routing',
     concept: 'Routing Basics',
     summary: 'How a packet chooses a next hop and what the routing table really encodes.',
@@ -192,7 +182,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 19,
+    day: 18,
     slug: 'static-routes',
     concept: 'Static Routes',
     summary: 'Manually steering traffic and watching a route finally get used.',
@@ -202,7 +192,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 20,
+    day: 19,
     slug: 'nat-where-it-happens',
     concept: 'NAT',
     summary: 'Finding the exact device that rewrites source addresses and ports.',
@@ -212,7 +202,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 21,
+    day: 20,
     slug: 'dns-what-happens-when-i-type',
     concept: 'DNS',
     summary: 'Tracing one lookup and watching the cache rewrite the story.',
@@ -224,7 +214,7 @@ export const journey: JourneyEntry[] = [
 
   // ── Phase 4 · Hardening, depth & making it observable ───────────────────
   {
-    day: 22,
+    day: 21,
     slug: 'reverse-proxy-tls',
     concept: 'TLS Termination',
     summary: 'Where HTTPS actually ends and how the proxy presents a valid certificate.',
@@ -234,7 +224,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 23,
+    day: 22,
     slug: 'firewall-what-it-sees',
     concept: 'Firewalls',
     summary: 'Stateful vs stateless: what a firewall actually inspects per packet.',
@@ -244,17 +234,17 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 24,
+    day: 23,
     slug: 'network-segmentation',
     concept: 'Segmentation',
     summary: 'Splitting the lab into trust zones so IoT can never touch the servers.',
     status: 'planned',
     difficulty: 'deep',
-    tags: ['Security', 'VLAN'],
+    tags: ['Security', 'Isolation'],
     hasExperiment: false,
   },
   {
-    day: 25,
+    day: 24,
     slug: 'tcp-handshake',
     concept: 'TCP Handshake',
     summary: 'SYN, SYN-ACK, ACK — and what sequence numbers are actually agreeing on.',
@@ -264,7 +254,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 26,
+    day: 25,
     slug: 'mtu-and-fragmentation',
     concept: 'MTU',
     summary: 'The mysterious hang that is really a path-MTU / fragmentation problem.',
@@ -274,7 +264,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 27,
+    day: 26,
     slug: 'wireshark-reading-a-capture',
     concept: 'Wireshark',
     summary: 'Turning a raw pcap into a story with filters and follow-stream.',
@@ -284,7 +274,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 28,
+    day: 27,
     slug: 'vpn-wireguard',
     concept: 'VPNs',
     summary: 'A raw WireGuard tunnel end to end, and what the encrypted packets reveal.',
@@ -294,7 +284,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 29,
+    day: 28,
     slug: 'zero-trust',
     concept: 'Zero Trust',
     summary: 'Segmenting the lab so every flow must be explicitly allowed.',
@@ -304,7 +294,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 30,
+    day: 29,
     slug: 'network-automation',
     concept: 'Network Automation',
     summary: 'Describing the lab as code and applying config idempotently.',
@@ -314,7 +304,7 @@ export const journey: JourneyEntry[] = [
     hasExperiment: false,
   },
   {
-    day: 31,
+    day: 30,
     slug: 'observability',
     concept: 'Observability',
     summary: 'Flows, metrics, and captures that make the invisible network visible.',
