@@ -10,7 +10,7 @@ export const experiments: Experiment[] = [
     concept: 'Proxmox VE',
     summary:
       'Turning an old desktop into a type-1 hypervisor — installing Proxmox VE, understanding the vmbr0 bridge it builds, and reaching the web console that becomes mission control for the whole lab.',
-    status: 'complete',
+    status: 'in-progress',
     difficulty: 'core',
     tags: ['Proxmox', 'Virtualization', 'Homelab', 'KVM', 'Linux'],
     date: '2025-01-02',
@@ -149,7 +149,7 @@ ifreload -a
     concept: 'AdGuard Home',
     summary:
       'Standing up AdGuard Home in Docker, pointing the whole network at it, and watching an ad domain get answered with 0.0.0.0 while a real domain resolves normally — DNS as a control point.',
-    status: 'complete',
+    status: 'planned',
     difficulty: 'core',
     tags: ['DNS', 'AdGuard', 'Docker', 'Security', 'Wireshark'],
     date: '2025-01-11',
@@ -274,7 +274,7 @@ sudo ss -ulpn 'sport = :53'
     concept: 'Nginx Proxy Manager',
     summary:
       'Putting a reverse proxy in front of the homelab so a single IP serves every service by hostname — and capturing the HTTP Host header that decides which backend a request reaches.',
-    status: 'complete',
+    status: 'planned',
     difficulty: 'core',
     tags: ['Reverse Proxy', 'Nginx', 'Layer 7', 'HTTP', 'TLS'],
     date: '2025-01-12',
@@ -371,7 +371,7 @@ sudo tcpdump -i eth0 -n 'tcp port 443' -vvv | grep -i server_name
     concept: 'ARP',
     summary:
       'Watching a machine shout across the broadcast domain to find the MAC address behind an IP — and what happens when two hosts claim the same address.',
-    status: 'complete',
+    status: 'planned',
     difficulty: 'core',
     tags: ['ARP', 'Layer 2', 'Ethernet', 'Wireshark'],
     date: '2025-01-06',
@@ -480,7 +480,7 @@ Try running \`arping <gateway-ip>\` from two hosts with the same address and wat
     concept: 'VLANs',
     summary:
       'One physical switch, two networks that cannot see each other — until I capture the trunk and watch the 4-byte tag that keeps them apart.',
-    status: 'complete',
+    status: 'planned',
     difficulty: 'core',
     tags: ['VLAN', '802.1Q', 'Trunk', 'Layer 2', 'Isolation'],
     date: '2025-01-09',
@@ -571,7 +571,7 @@ sudo tcpdump -i eth0 -e -n vlan
     concept: 'DNS',
     summary:
       'Following a single name resolution from the stub resolver, through my local Pi-hole, out to the recursive path — and watching the cache change the story on the second try.',
-    status: 'complete',
+    status: 'planned',
     difficulty: 'core',
     tags: ['DNS', 'Resolution', 'Caching', 'UDP', 'Wireshark'],
     date: '2025-01-13',
