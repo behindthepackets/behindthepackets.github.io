@@ -40,10 +40,17 @@ export const labNodes: LabNode[] = [
   },
   {
     id: 'server',
-    label: 'Lab Server',
+    label: 'pve0 · Proxmox Node',
     kind: 'server',
-    detail: 'Hypervisor + services: DNS (Pi-hole), reverse proxy, monitoring.',
-    meta: ['KVM / Proxmox', 'Pi-hole DNS', 'Reverse proxy + TLS'],
+    detail: 'The bare-metal foundation. Proxmox VE hosting VMs, LXC, and a Docker stack.',
+    meta: ['192.168.1.10 · pve0', 'Proxmox VE + Docker', 'Uptime Kuma · Portainer · AdGuard · NPM'],
+  },
+  {
+    id: 'nas',
+    label: 'NAS · Storage',
+    kind: 'server',
+    detail: 'The storage layer wiring network storage to Proxmox, VMs, containers, and Docker.',
+    meta: ['NFS / SMB shares', 'Proxmox backup target', 'Bulk + VM disk storage'],
   },
   {
     id: 'vlan-trusted',

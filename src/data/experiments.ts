@@ -17,13 +17,14 @@ export const experiments: Experiment[] = [
     sections: [
       {
         title: 'The Question',
-        body: `Every homelab tutorial starts with "install Proxmox" and then hand-waves the rest. I wanted to actually understand what happens: what *is* a type-1 hypervisor, what does the installer put on the disk, and — the part I really cared about — how does one physical NIC end up shared by the host and a dozen future VMs? This is Day 1, so I'm documenting **everything** it takes to go from a blank machine to a working Proxmox console.`,
+        body: `Every homelab tutorial starts with "install Proxmox" and then hand-waves the rest. I wanted to actually understand what happens: what *is* a type-1 hypervisor, what does the installer put on the disk, and — the part I really cared about — how does one physical NIC end up shared by the host and a dozen future VMs? This is Day 1: the bare-metal foundation of the whole lab. I named the node **\`pve0\`** on purpose — a numbered hostname so the environment can grow into \`pve1\`, \`pve2\` and beyond — and documented **everything** it takes to go from a blank machine to a working Proxmox console.`,
       },
       {
         title: 'The Setup',
         body: `- **Hardware:** repurposed desktop — quad-core CPU with VT-x, 32 GB RAM, one 500 GB SSD, one onboard 1 GbE NIC
 - **Installer:** Proxmox VE 8.x ISO written to a USB stick
-- **Network plan:** host management IP \`192.168.10.10/24\`, gateway \`192.168.10.1\`, DNS \`192.168.10.1\` for now
+- **Node identity:** hostname \`pve0\` — numbered so I can add \`pve1\`/\`pve2\` later
+- **Network plan:** management IP \`192.168.1.10/24\`, gateway \`192.168.1.1\`, DNS \`192.168.1.1\` for now
 - **Access:** headless after install — everything via the web UI on port **8006**
 
 Two BIOS things matter before anything else: enable **VT-x/AMD-V** (hardware virtualization) and, if I want to pass through devices later, **VT-d/IOMMU**.`,
@@ -36,7 +37,7 @@ Two BIOS things matter before anything else: enable **VT-x/AMD-V** (hardware vir
 2. It creates a Linux bridge, \`vmbr0\`, and moves my physical NIC's IP onto it.
 3. From then on the host talks to the network *through* that bridge, and every VM will plug into the same bridge like ports on a virtual switch.
 
-If that's right, the host and the VMs should end up as peers on \`192.168.10.0/24\`, all sharing one physical cable.`,
+If that's right, \`pve0\` and every VM should end up as peers on \`192.168.1.0/24\`, all sharing one physical cable.`,
       },
       {
         title: 'The Experiment',
@@ -52,10 +53,10 @@ sudo dd if=proxmox-ve_8.iso of=/dev/sdX bs=4M status=progress conv=fsync
 **3. Configure the management network** when prompted:
 
 \`\`\`text
-Hostname (FQDN):  pve.lab.local
-IP Address (CIDR): 192.168.10.10/24
-Gateway:           192.168.10.1
-DNS Server:        192.168.10.1
+Hostname (FQDN):  pve0.lab.local
+IP Address (CIDR): 192.168.1.10/24
+Gateway:           192.168.1.1
+DNS Server:        192.168.1.1
 \`\`\`
 
 **4. First boot + update.** After reboot the console prints the management URL. I removed the enterprise repo and enabled the no-subscription repo so updates work without a license:
@@ -68,7 +69,7 @@ sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/pve-enterprise.list
 apt update && apt -y dist-upgrade
 \`\`\`
 
-**5. Open the console:** \`https://192.168.10.10:8006\` and log in as \`root\` with realm **Linux PAM**.`,
+**5. Open the console:** \`https://192.168.1.10:8006\` and log in as \`root\` with realm **Linux PAM**.`,
       },
       {
         title: 'The Packets',
@@ -82,8 +83,8 @@ iface enp3s0 inet manual          # the physical NIC — no IP of its own
 
 auto vmbr0
 iface vmbr0 inet static           # the bridge holds the host's IP
-    address 192.168.10.10/24
-    gateway 192.168.10.1
+    address 192.168.1.10/24
+    gateway 192.168.1.1
     bridge-ports enp3s0           # physical NIC is enslaved to the bridge
     bridge-stp off
     bridge-fd 0
@@ -94,23 +95,23 @@ So my hypothesis was right: the physical NIC (\`enp3s0\`) has **no IP** — it's
 \`\`\`bash
 ip -br addr show
 # enp3s0   UP   (no address)
-# vmbr0    UP   192.168.10.10/24
+# vmbr0    UP   192.168.1.10/24
 
 bridge link show                 # enp3s0 is a member of vmbr0
 \`\`\`
 
-A capture on \`vmbr0\` during a \`ping 192.168.10.1\` showed the ARP-then-ICMP exchange leaving through the bridge and out the single physical port — exactly like a real switch uplink.`,
+A capture on \`vmbr0\` during a \`ping 192.168.1.1\` showed the ARP-then-ICMP exchange leaving through the bridge and out the single physical port — exactly like a real switch uplink.`,
       },
       {
         title: 'The Result',
-        body: `Bare metal to hypervisor in about 20 minutes. The web console came up on :8006, the host sat at \`192.168.10.10\`, and \`vmbr0\` was ready to accept virtual machines. Crucially, I now understood that adding a VM later just means giving it a virtual NIC plugged into \`vmbr0\` — it becomes another peer on \`192.168.10.0/24\` with no extra cabling.`,
+        body: `Bare metal to hypervisor in about 20 minutes. The web console came up on :8006, \`pve0\` sat at \`192.168.1.10\`, and \`vmbr0\` was ready to accept virtual machines. Crucially, I now understood that adding a VM later just means giving it a virtual NIC plugged into \`vmbr0\` — it becomes another peer on \`192.168.1.0/24\` with no extra cabling. This one node is the base of the whole stack to come: **Hardware → Proxmox (\`pve0\`) → virtual networking → VMs/LXC → Docker → containers → apps → NAS → network**.`,
       },
       {
         title: 'What Broke',
         body: `Two things bit me:
 
 1. **No VT-x.** My first VM creation failed with \`KVM virtualisation configured, but not available\`. Hardware virtualization was disabled in BIOS. Enabling **Intel VT-x** fixed it — Proxmox will fall back to slow emulation otherwise.
-2. **Web UI unreachable at first.** I mistyped the CIDR as \`192.168.10.10/32\`, so the host had no route to its own subnet. \`ip route\` showed no LAN route. Fixing the mask to \`/24\` in \`/etc/network/interfaces\` and running \`ifreload -a\` brought the console straight back.`,
+2. **Web UI unreachable at first.** I mistyped the CIDR as \`192.168.1.10/32\`, so the host had no route to its own subnet. \`ip route\` showed no LAN route. Fixing the mask to \`/24\` in \`/etc/network/interfaces\` and running \`ifreload -a\` brought the console straight back.`,
       },
       {
         title: 'What I Learned',
@@ -160,10 +161,10 @@ ifreload -a
       },
       {
         title: 'The Setup',
-        body: `- **Host:** Docker VM on Proxmox, \`192.168.10.20\`
+        body: `- **Host:** Docker VM on \`pve0\`, \`192.168.1.20\`
 - **Service:** AdGuard Home in a container, publishing **53/udp + 53/tcp** (DNS) and **3000/tcp** (admin)
 - **Upstream:** \`1.1.1.1\` and \`9.9.9.9\`
-- **Rollout:** set the DHCP server's DNS option to \`192.168.10.20\` so every client uses it
+- **Rollout:** set the DHCP server's DNS option to \`192.168.1.20\` so every client uses it
 
 \`\`\`yaml
 # docker-compose.yml
@@ -197,10 +198,10 @@ services:
 sudo tcpdump -i eth0 -n port 53 &
 
 # A normal domain
-dig @192.168.10.20 example.com
+dig @192.168.1.20 example.com
 
 # A domain on the blocklist
-dig @192.168.10.20 doubleclick.net
+dig @192.168.1.20 doubleclick.net
 \`\`\``,
       },
       {
@@ -285,16 +286,16 @@ sudo ss -ulpn 'sport = :53'
       },
       {
         title: 'The Setup',
-        body: `- **Proxy:** Nginx Proxy Manager (NPM) in Docker, \`192.168.10.30\`, publishing **80**, **443**, and **81** (admin UI)
+        body: `- **Proxy:** Nginx Proxy Manager (NPM) in Docker, \`192.168.1.30\`, publishing **80**, **443**, and **81** (admin UI)
 - **Backends:** \`portainer:9000\`, \`uptime-kuma:3001\`, \`adguard:3000\`
-- **Names:** wildcard local DNS in AdGuard so \`*.lab.local\` → \`192.168.10.30\`
+- **Names:** wildcard local DNS in AdGuard so \`*.lab.local\` → \`192.168.1.30\`
 - **Proxy hosts in NPM:**
-  - \`portainer.lab.local\`  → \`192.168.10.20:9000\`
-  - \`status.lab.local\`     → \`192.168.10.20:3001\``,
+  - \`portainer.lab.local\`  → \`192.168.1.20:9000\`
+  - \`status.lab.local\`     → \`192.168.1.20:3001\``,
       },
       {
         title: 'The Hypothesis',
-        body: `The proxy can't be deciding by IP or port — every request arrives at the same \`192.168.10.30:443\`. My bet was that it routes on the **HTTP \`Host\` header** (and TLS SNI for the encrypted case). Same socket, different \`Host:\` value, different backend. The client should never know a proxy was involved.`,
+        body: `The proxy can't be deciding by IP or port — every request arrives at the same \`192.168.1.30:443\`. My bet was that it routes on the **HTTP \`Host\` header** (and TLS SNI for the encrypted case). Same socket, different \`Host:\` value, different backend. The client should never know a proxy was involved.`,
       },
       {
         title: 'The Experiment',
@@ -302,26 +303,26 @@ sudo ss -ulpn 'sport = :53'
 
 \`\`\`bash
 # Same IP, same port — only the Host header changes
-curl -H 'Host: portainer.lab.local' http://192.168.10.30/
-curl -H 'Host: status.lab.local'    http://192.168.10.30/
+curl -H 'Host: portainer.lab.local' http://192.168.1.30/
+curl -H 'Host: status.lab.local'    http://192.168.1.30/
 
 # Capture the plaintext HTTP request to see what the proxy keys on
-sudo tcpdump -i eth0 -A -n 'tcp port 80 and host 192.168.10.30'
+sudo tcpdump -i eth0 -A -n 'tcp port 80 and host 192.168.1.30'
 \`\`\``,
       },
       {
         title: 'The Packets',
-        body: `Both requests hit the identical destination \`192.168.10.30:80\`, and the only thing distinguishing them on the wire was one header line:
+        body: `Both requests hit the identical destination \`192.168.1.30:80\`, and the only thing distinguishing them on the wire was one header line:
 
 \`\`\`text
 GET / HTTP/1.1
-Host: portainer.lab.local        <-- routes to 192.168.10.20:9000
+Host: portainer.lab.local        <-- routes to 192.168.1.20:9000
 User-Agent: curl/8.4.0
 \`\`\`
 
 \`\`\`text
 GET / HTTP/1.1
-Host: status.lab.local           <-- routes to 192.168.10.20:3001
+Host: status.lab.local           <-- routes to 192.168.1.20:3001
 User-Agent: curl/8.4.0
 \`\`\`
 
@@ -329,7 +330,7 @@ NPM matched the \`Host\` value against its proxy-host list and forwarded to the 
       },
       {
         title: 'The Result',
-        body: `One IP now fronts the entire lab. \`https://portainer.lab.local\` and \`https://status.lab.local\` both resolve to \`192.168.10.30\`, and the proxy silently fans them out to the right container. Ports disappeared from my life, and NPM handled certificates so everything spoke HTTPS.`,
+        body: `One IP now fronts the entire lab. \`https://portainer.lab.local\` and \`https://status.lab.local\` both resolve to \`192.168.1.30\`, and the proxy silently fans them out to the right container. Ports disappeared from my life, and NPM handled certificates so everything spoke HTTPS.`,
       },
       {
         title: 'What Broke',
@@ -339,7 +340,7 @@ NPM matched the \`Host\` value against its proxy-host list and forwarded to the 
 [error] connect() failed (111: Connection refused) while connecting to upstream
 \`\`\`
 
-I changed the forward hosts from \`localhost\` to the actual host IP \`192.168.10.20\` (and put the containers on a shared network), and the 502s turned into clean 200s.`,
+I changed the forward hosts from \`localhost\` to the actual host IP \`192.168.1.20\` (and put the containers on a shared network), and the 502s turned into clean 200s.`,
       },
       {
         title: 'What I Learned',

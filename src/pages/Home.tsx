@@ -25,14 +25,18 @@ export function Home() {
               This is a real network, not a slide deck.
             </h2>
             <p className="section-lede">
-              It started with a single Proxmox box. I began exploring
-              virtualization — VMs and Linux containers — then moved to Docker,
-              running Uptime Kuma, Portainer, AdGuard, and Nginx Proxy Manager, and
-              gradually wired everything into a complete home infrastructure. Along
-              the way I went deeper into routing, VLANs, firewalls, DNS, reverse
-              proxies, backups, and network segmentation. What began as a simple
-              Proxmox setup became a full homelab — and a hands-on journey to
-              understand what really happens behind the packets.
+              It started with a single Proxmox node — <code>pve0</code> at{' '}
+              <code>192.168.1.10</code> — as the bare-metal foundation. From there
+              I built the virtualization layer with VMs and LXC containers, then
+              layered in Docker to run Uptime Kuma, Portainer, AdGuard, and Nginx
+              Proxy Manager. A NAS joined as the storage layer, wiring network
+              storage into Proxmox, VMs, and containers. Each layer was another
+              chance to understand what happens underneath — routing, VLANs,
+              firewalling, DNS, segmentation, backups, and packet flows.
+            </p>
+            <p className="section-lede section-lede--mono">
+              Hardware → Proxmox (<code>pve0</code>) → Virtual Networking →
+              VMs/LXC → Docker → Containers → Applications → NAS → Network
             </p>
           </div>
         </div>

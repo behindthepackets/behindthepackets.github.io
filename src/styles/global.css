@@ -137,6 +137,28 @@ code, kbd, pre, samp {
   max-width: 62ch;
   font-size: 1.02rem;
 }
+.section-lede--mono {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--wire);
+  margin-top: 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: 6px;
+  background: var(--panel-2);
+  line-height: 1.9;
+  max-width: 100%;
+}
+
+.section-lede code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  color: var(--accent);
+}
+.section-lede--mono code {
+  color: var(--accent);
+}
 
 .section-head {
   margin-bottom: 2.4rem;

@@ -14,7 +14,8 @@ const NODES: DiagramNode[] = [
   { id: 'router', x: 300, y: 180, label: 'Router' },
   { id: 'switch', x: 300, y: 250, label: 'Switch' },
   { id: 'ap', x: 150, y: 250, label: 'Wi-Fi AP' },
-  { id: 'server', x: 450, y: 250, label: 'Server' },
+  { id: 'server', x: 450, y: 250, label: 'pve0' },
+  { id: 'nas', x: 550, y: 250, label: 'NAS' },
   { id: 'vlan-trusted', x: 90, y: 330, label: 'VLAN10' },
   { id: 'vlan-iot', x: 210, y: 330, label: 'VLAN20' },
   { id: 'vms', x: 400, y: 330, label: 'VMs' },
@@ -31,6 +32,7 @@ const EDGES: [string, string][] = [
   ['ap', 'vlan-iot'],
   ['server', 'vms'],
   ['server', 'containers'],
+  ['server', 'nas'],
 ];
 
 const pos = Object.fromEntries(NODES.map((n) => [n.id, n]));
