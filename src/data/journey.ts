@@ -35,7 +35,7 @@ export const journey: JourneyEntry[] = [
     status: 'in-progress',
     difficulty: 'core',
     tags: ['Linux', 'LXC'],
-    hasExperiment: false,
+    hasExperiment: true,
   },
   {
     day: 4,

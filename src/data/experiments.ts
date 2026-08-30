@@ -144,6 +144,230 @@ ifreload -a
     ],
   },
   {
+    day: 3,
+    slug: 'proxmox-lxc-containers',
+    title: 'LXC Containers: Where a Container Sits in the Proxmox Stack',
+    concept: 'LXC Containers',
+    summary:
+      'Building a Linux container on pve0 and tracing how it gets its own network identity on vmbr0 — then nesting Docker inside it to watch a packet cross host, LXC, Docker bridge, and container before it reaches an app.',
+    status: 'in-progress',
+    difficulty: 'core',
+    tags: ['LXC', 'Proxmox', 'Docker', 'Linux', 'Bridge'],
+    date: '2025-01-04',
+    sections: [
+      {
+        title: 'The Question',
+        body: `The next step after standing up the host was moving *into* it — from \`pve0\` itself down into a **Linux container (LXC)**. The point wasn't to run another app. I wanted to understand where a container actually sits in the Proxmox architecture, and how networking, storage, compute, and applications line up across the layers. This is the essence of the whole project: don't just make the container work — understand what happens between the application and the wire.`,
+      },
+      {
+        title: 'The Setup',
+        body: `The node is the same bare-metal foundation from Day 1:
+
+**Actual — Proxmox host**
+\`\`\`text
+Hostname: pve0
+IP:       192.168.1.10/24
+Bridge:   vmbr0
+Gateway:  192.168.1.1
+\`\`\`
+
+An LXC is **not a VM**. It shares the host's Linux kernel while keeping process, filesystem, network, and resource isolation — which makes it ideal for lightweight infrastructure services:
+
+\`\`\`text
+Physical Hardware
+       │
+       ▼
+    Proxmox (pve0)
+       │
+       ▼
+   Linux Host Kernel
+       │
+       ▼
+   LXC Container
+       │
+       ▼
+    Applications
+\`\`\`
+
+I configured resources **deliberately** rather than allocating everything available. The fields that matter: container ID, hostname, distro, CPU, memory, swap, root FS, storage location, network interface, MAC, IP, gateway, DNS, and startup behaviour.
+
+> The block below is an **EXAMPLE** layout to show the shape of the config — not my live values. Record the **actual** numbers from your own container; don't copy these.
+
+**Example configuration**
+\`\`\`text
+CT ID:      101              (example)
+Hostname:   lxc-docker       (example)
+Distro:     Debian 12        (example)
+Cores:      2                (example)
+Memory:     2048 MB          (example)
+Swap:       512 MB           (example)
+Root FS:    local-lvm : 16G  (example)
+Bridge:     vmbr0
+IP/CIDR:    192.168.1.__/24   ← actual value TBD
+Gateway:    192.168.1.1
+DNS:        192.168.1.__      ← actual value TBD
+Start:      on boot
+\`\`\``,
+      },
+      {
+        title: 'The Hypothesis',
+        body: `LXC shares the host kernel, so it should feel like a normal Linux box but boot in about a second. Crucially, it gets its **own** network identity — it does **not** inherit \`pve0\`'s \`192.168.1.10\`. I expected:
+
+1. The container's vNIC to attach to the host bridge \`vmbr0\`.
+2. The container to become an independent endpoint on \`192.168.1.0/24\` with its own IP and MAC.
+3. Its packets to leave through \`vmbr0\` → physical NIC → switch, exactly like the host's.
+
+\`\`\`text
+Physical Network
+       │
+       ▼
+    Proxmox (pve0 · 192.168.1.10)
+       │
+       ▼
+   Linux Bridge (vmbr0)
+       │
+       ▼
+     LXC vNIC
+       │
+       ▼
+   LXC Container (its own IP)
+\`\`\``,
+      },
+      {
+        title: 'The Experiment',
+        body: `**1. Create the container** from a distro template (download a template in Proxmox, then create the CT with the resources above). An **unprivileged** container is the safe default.
+
+**2. Give it a predictable identity** instead of a changing lease. Record the actual values:
+
+\`\`\`text
+Container IP:   192.168.1.__/24   ← actual TBD
+Subnet:         255.255.255.0
+Gateway:        192.168.1.1
+DNS:            192.168.1.__      ← actual TBD
+Bridge:         vmbr0
+\`\`\`
+
+The container should then be able to — and I tested each **independently** — reach its gateway, reach other LAN hosts, resolve DNS, reach the Internet where permitted, and accept connections from authorized systems.
+
+**3. First boot.** Start it, open the Proxmox console, log in, and answer one networking question per command:
+
+\`\`\`bash
+hostname                 # is it who I think it is?
+ip addr                  # does it have the expected IP?
+ip route                 # is there a default route via the gateway?
+ip neigh                 # has it ARP-resolved the gateway?
+cat /etc/resolv.conf     # which resolver will it use?
+ping <gateway>           # L3 to the gateway
+ping <another-lan-host>  # across the LAN
+ping 8.8.8.8             # egress WITHOUT DNS
+ping google.com          # egress WITH DNS (name → answer)
+\`\`\`
+
+**4. Prepare it minimally** — update, then install only what the workload needs:
+
+\`\`\`bash
+apt update && apt upgrade
+# then only the tools this container actually needs
+\`\`\``,
+      },
+      {
+        title: 'The Packets',
+        body: `This is where the container becomes part of the networking experiment. **Egress** — application to wire:
+
+\`\`\`text
+Application → LXC net stack → Container vNIC → vmbr0 (bridge)
+           → Physical NIC → Switch → Router / Destination
+\`\`\`
+
+**Return** — wire back to application:
+
+\`\`\`text
+Destination → Network → pve0 physical NIC → vmbr0
+           → LXC vNIC → Container net stack → Application
+\`\`\`
+
+Later I put **Docker inside the LXC**, which adds *another* network layer. These are separate abstractions — LXC gives an isolated Linux environment under Proxmox; Docker isolates applications *inside* that environment:
+
+\`\`\`text
+            Proxmox (pve0 · 192.168.1.10)
+                     │
+                     ▼
+             LXC → Linux OS → Docker
+                                 │
+        ┌──────────────┬─────────┼──────────────────┐
+        ▼              ▼         ▼                   ▼
+   Uptime Kuma    Portainer   AdGuard      Nginx Proxy Manager
+\`\`\`
+
+So a single request now crosses several identities before it reaches code:
+
+\`\`\`text
+Client → LAN → pve0 → LXC → Docker network → Docker container → App port
+\`\`\`
+
+Each boundary has its own address space: **physical host · Proxmox host · LXC · Docker bridge · Docker container · application port**. Knowing which boundary a packet died at is most of troubleshooting.`,
+      },
+      {
+        title: 'The Result',
+        body: `The LXC came up as a distinct endpoint on \`192.168.1.0/24\` — its own IP and MAC, *not* the host's. I verified it layer by layer:
+
+\`\`\`text
+Proxmox → LXC → Network → Docker → Container → Application
+\`\`\`
+
+with \`ip addr\` / \`ip route\` on both the host and the container, \`dig\` for DNS, and \`docker ps\` / \`docker network ls\` inside the container. Every hop resolved, so the nested stack was sound end to end.`,
+      },
+      {
+        title: 'What Broke',
+        body: `The classic nested-container gotcha: **Docker would not start inside the unprivileged LXC.** The daemon errored around cgroups / keyring because an unprivileged container blocks the operations Docker needs.
+
+The fix is a container **feature flag**, not a reinstall — enable nesting (and keyctl) on the LXC, then restart it:
+
+\`\`\`text
+# On the Proxmox host, per container (example CT ID 101)
+pct set 101 --features nesting=1,keyctl=1
+# then restart the container
+\`\`\`
+
+More important than the fix was the **method**: don't reinstall or change random settings — *follow the packet* and find exactly where it stops.
+
+\`\`\`text
+App starts? → Docker running? → Container running? → Docker network right?
+→ LXC has IP? → LXC has route? → reaches gateway? → reaches LAN?
+→ resolves DNS? → reaches destination? → Proxmox net right? → firewall blocking?
+\`\`\``,
+      },
+      {
+        title: 'What I Learned',
+        body: `- **LXC ≠ Docker.** LXC is an isolated Linux environment under Proxmox; Docker is application isolation *inside* it. Nesting them builds a stack that's perfect for learning where each boundary lives.
+- A container has its **own** network identity — it never inherits \`pve0\`'s \`192.168.1.10\`. That distinction is the first thing to check when connectivity breaks.
+- Every layer is a separate address space: **host · Proxmox · LXC · Docker bridge · container · app port**.
+- **Least privilege first:** prefer unprivileged containers, expose only the ports you must, mount only what you need, and never bake secrets (passwords, keys, tokens) into config or public docs.
+- When something fails, *follow the packet* instead of guessing.`,
+      },
+      {
+        title: 'Try It Yourself',
+        body: `Verify each layer, top to bottom:
+
+\`\`\`bash
+# On the Proxmox host (pve0)
+ip addr; ip route
+
+# Inside the LXC
+ip addr; ip route; ping <gateway>
+dig google.com
+
+# Docker, inside the LXC
+docker ps
+docker network ls
+docker network inspect <network>
+\`\`\`
+
+If a hop fails, reach for \`ip addr\`, \`ip route\`, \`ip neigh\`, \`ss\`, \`curl\`, \`ping\`, \`dig\`, \`tcpdump\` — plus \`docker inspect\` — to pin the exact stop. The goal isn't just "it works"; it's understanding what happens between the application and the wire.`,
+      },
+    ],
+  },
+  {
     day: 9,
     slug: 'adguard-dns-sinkhole',
     title: 'AdGuard Home: Running My Own DNS Sinkhole',
