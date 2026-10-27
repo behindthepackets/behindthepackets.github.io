@@ -4,12 +4,13 @@ import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
 import { ExperimentPage } from './pages/ExperimentPage';
+import { HomelabJourneyPage } from './pages/HomelabJourneyPage';
 
 // Keep focus/scroll sane on route changes to experiment pages.
 function useRouteReset() {
   const location = useLocation();
   useEffect(() => {
-    if (location.pathname.startsWith('/experiments')) {
+    if (location.pathname.startsWith('/experiments') || location.pathname === '/homelab-journey') {
       window.scrollTo(0, 0);
     }
   }, [location.pathname]);
@@ -23,6 +24,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/experiments/:slug" element={<ExperimentPage />} />
+        <Route path="/homelab-journey" element={<HomelabJourneyPage />} />
         <Route path="*" element={<Home />} />
       </Routes>
       <Footer />
