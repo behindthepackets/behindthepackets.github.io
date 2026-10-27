@@ -8,6 +8,7 @@ import { PacketAnimation } from '../components/PacketAnimation';
 import { ExperimentCard } from '../components/ExperimentCard';
 import { journey } from '../data/journey';
 import { siteConfig } from '../data/config';
+import { Link } from 'react-router-dom';
 
 export function Home() {
   const featured = journey.filter((j) => j.hasExperiment);
@@ -15,6 +16,18 @@ export function Home() {
   return (
     <main>
       <Hero />
+
+      {/* HOMELAB JOURNEY FEATURE */}
+      <section className="section section--tight" id="homelab-journey">
+        <div className="container">
+          <div className="card" style={{ padding: 'clamp(1.25rem, 3vw, 2rem)' }}>
+            <span className="eyebrow">// homelab journey · new write-up</span>
+            <h2 className="section-title" style={{ marginTop: '0.75rem' }}>From a Surface Go to My Own Homelab</h2>
+            <p className="section-lede">Follow the build from Proxmox on a small Surface Go to Docker, AdGuard Home, Nginx Proxy Manager, network storage, printing, and a PaperMC Minecraft server.</p>
+            <Link to="/homelab-journey" className="btn btn--primary">Read the homelab journey →</Link>
+          </div>
+        </div>
+      </section>
 
       {/* ABOUT THE LAB */}
       <section className="section section--tight" id="about">
